@@ -172,3 +172,48 @@ actualiza_vizinhas_apos_pontes(Estado, Pos1, Pos2, Novo_Estado) :-
     posicoes_entre(Pos1, Pos2, Posicoes_entre), 
     !,
     maplist(actualiza_vizinhas_entrada(_, _, Posicoes_entre), Estado, Novo_Estado).
+
+
+% ____________________________________________________________________
+% 2.10 - ilhas_terminadas/2
+% Da a lista de ilhas terminadas do estado, ou seja, as ilhas que tem todas as pontes associadas.
+% ____________________________________________________________________
+
+ilhas_terminadas(Estado, Ilhas_term) :-
+    findall(Entrada, (member(Entrada, Estado), Entrada = [ilha(N_pontes, _), _, Pontes], N_pontes \== 'X', length(Pontes, N_pontes)), Entradas_Ilhas_term),
+    maplist(nth1(1), Entradas_Ilhas_term, Ilhas_term).
+
+% ____________________________________________________________________
+% 2.11 - tira_ilhas_terminadas_entrada/3
+% Da a entrada resultante de remover as ilhas terminadas da sua lista de ilhas vizinhas.
+% ____________________________________________________________________
+
+tira_ilhas_terminadas_entrada(Ilhas_term, [Ilha, Vizinhas, Pontes], [Ilha, Novas_Vizinhas, Pontes]) :-  
+    findall(Ilha_nao_term, (member(Ilha_nao_term, Vizinhas), \+ member(Ilha_nao_term, Ilhas_term)), Novas_Vizinhas).
+
+
+% ____________________________________________________________________
+% 2.12 - tira_ilhas_terminadas/3
+% Da o Novo_estado, resultante de remover as ilhas terminadas de cada entrada do Estado.
+% ____________________________________________________________________
+
+tira_ilhas_terminadas(Estado, Ilhas_term, Novo_estado) :-
+    maplist(tira_ilhas_terminadas_entrada(Ilhas_term), Estado, Novo_estado).
+
+% ____________________________________________________________________
+% 2.13 - marca_ilhas_terminadas_entrada/3
+% Da a entrada apos substituir o numero de pontes da sua ilha por 'X', se esta pertencer ahs ilhas terminadas (Ilhas_term),
+% caso contrario a entrada mantem-se igual.
+% ____________________________________________________________________
+
+
+marca_ilhas_terminadas_entrada(Ilhas_term, [Ilha, Vizinhas, Pontes], [Ilha_com_X, Vizinhas, Pontes]) :- member(Ilha, Ilhas_term), Ilha = ilha(_, (L,C)), Ilha_com_X = ilha('X', (L,C)).
+
+marca_ilhas_terminadas_entrada(Ilhas_term, Entrada, Entrada) :- Entrada = [Ilha, _, _], \+ member(Ilha, Ilhas_term).
+
+% ____________________________________________________________________
+% 2.14 - marca_ilhas_terminadas/3
+% Da o Novo_estado resultante de aplicar o predicado marca_ilhas_terminadas_entrada ao Estado.
+% ____________________________________________________________________
+marca_ilhas_terminadas(Estado, Ilhas_term, Novo_estado) :-
+    maplist(marca_ilhas_terminadas_entrada(Ilhas_term), Estado, Novo_estado).

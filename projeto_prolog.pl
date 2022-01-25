@@ -1,8 +1,10 @@
 %OMD FUNCIONA
-% 2.1
+% 2.1 - extrai_ilhas_linha/3
+% Da a lista ordenada (da esquerda para a direita) de ilhas da linha do puzzle. 
+% ____________________________________________________________________
 
-extrai_ilhas_linha(NL, Linha_escrita, Ilhas) :-
-    extrai_ilhas_linha(NL, Linha_escrita, 1, [], Ilhas), !.
+extrai_ilhas_linha(NL, Linha_puzzle, Ilhas) :-
+    extrai_ilhas_linha(NL, Linha_puzzle, 1, [], Ilhas), !.
 
 extrai_ilhas_linha(_, [], _, Ilhas_Aux, Ilhas_Aux).
 
@@ -14,13 +16,14 @@ extrai_ilhas_linha(NL, [P|R], Ind, Ilhas_Aux, Ilhas) :-
     extrai_ilhas_linha(NL, R, Index, Ilhas_Aux2, Ilhas).
 
 % ____________________________________________________________________
-% 2.2
+% 2.2 - ilhas/2
+% Da a lista ordenada (da esquerda para a direita, e de cima para baixo) de ilhas do puzzle.
 % ____________________________________________________________________
 
 ilhas([], []).
 
-ilhas(Puz, Ilhas) :- 
-    ilhas(Puz, 1, [], Ilhas).
+ilhas(Puzzle, Ilhas) :- 
+    ilhas(Puzzle, 1, [], Ilhas).
 
 ilhas([], _, Ilhas_Aux, Ilhas_Aux).
 
@@ -32,7 +35,8 @@ ilhas([P|R], NL, Ilhas_Aux, Ilhas) :-
 
 
 % ____________________________________________________________________
-% 2.3 
+% 2.3 - vizinhas/3
+% Da a lista ordenada (de cima para baixo e da esquerda para a direita) de ilhas que sao vizinhas de Ilha.
 % ____________________________________________________________________
 
 
@@ -77,7 +81,9 @@ vizinhas(Ilhas, Ilha, Vizinhas) :-
 
 
 % ____________________________________________________________________
-% 2.4 
+% 2.4 - estado/2
+% Da a lista ordenada (estado) de entradas referentes a cada uma das ilhas, tal que Entrada = [ilha, lista de vizinhas, lista de pontes],
+% sendo a lista de pontes, inicialmente, vazia.
 % ____________________________________________________________________
 
 estado([], []).
@@ -91,7 +97,9 @@ estado([P|R], Ilhas, Acc_Estado, Estado) :-
     estado(R, Ilhas, Acc_Estado2, Estado).
 
 % ____________________________________________________________________
-% 2.5 
+% 2.5 - posicoes_entre/3
+% Da a lista ordenada de posicoes entre Pos1 e Pos2, exclusive, se estas pertencerem ah mesma linha ou coluna. 
+% Caso contrario, da false.
 % ____________________________________________________________________
 
 % funcao auxiliar 
@@ -101,7 +109,9 @@ posicoes_entre_aux(CL1, CL2, CL_Comum, N, Posicoes) :-
     findall(P, (P = (CL_P, CL_Comum), member(CL_P, Lista)), Posicoes)). % posicoes na mesma coluna, entre as linhas de Pos1 e Pos2
 
 
-% posicoes_entre(Pos, Pos, []).     % nao sei se deve dar falso ou []
+
+% posicoes_entre(Pos, Pos, []).     % nao sei se deve dar falso ou []---------------------------------------------
+
 
 posicoes_entre(Pos1, Pos2, Posicoes) :-
     Pos1 \== Pos2,
@@ -116,7 +126,8 @@ posicoes_entre(Pos1, Pos2, Posicoes) :-
     (posicoes_entre_aux(L2, L1, C1, 1, Posicoes)))).    % se L1 > L2
 
 % ____________________________________________________________________
-% 2.6
+% 2.6 - cria_ponte/3
+% Cria uma ponte entre as posicoes Pos1 e Pos2, tal que ponte = ponte(Pos1, Pos2).
 % ____________________________________________________________________
 
 cria_ponte(Pos1, Pos2, Ponte) :-
@@ -127,17 +138,15 @@ cria_ponte(Pos1, Pos2, Ponte) :-
 
 % ____________________________________________________________________
 % 2.7 - caminho_livre/5
-% diz se Pos1 e Pos2 continuam a ser vizinhas apos adicionar ponte(Pos1, Pos2)
+% Informa se Pos1 e Pos2 continuam a ser vizinhas apos adicionar ponte(Pos1, Pos2).
 % ____________________________________________________________________
 
 
-caminho_livre(_, _, Posicoes, I, Vz) :-
-    I =.. [ilha, _, Pos_I],
-    Vz =.. [ilha, _, Pos_Vz],
-    posicoes_entre(Pos_I, Pos_Vz, Pos_entre_Vizinhas),
+caminho_livre(_, _, Posicoes, ilha(_, Pos_Ilha), ilha(_, Pos_Viz)) :-
+    posicoes_entre(Pos_Ilha, Pos_Viz, Pos_entre_Vizinhas),
     (Pos_entre_Vizinhas == Posicoes; caminho_livre_aux(Pos_entre_Vizinhas, Posicoes)).  % se o caminho entre as ilhas vizinhas for igual ao da ponte, entao a ponte eh entre elas
 
-caminho_livre_aux([], _). %:- true
+caminho_livre_aux([], _). 
 caminho_livre_aux([P|R], Posicoes) :-
     exclude(==(P), Posicoes, Posicoes2),
     Posicoes2 == Posicoes,  % se Posicoes nao se alterou, entao nao coincidia com a posicao P 
@@ -145,24 +154,21 @@ caminho_livre_aux([P|R], Posicoes) :-
 
 % ____________________________________________________________________
 % 2.8 - actualiza_vizinhas_entrada/5
-% 
+% Da uma entrada com a lista de ilhas vizinhas atualizada, apos remover as que deixaram de ser vizinhas com a adicao de uma ponte.
 % ____________________________________________________________________
 
-% adicionar ponte(Pos1, Pos2) 
-% Posicoes = lista ordenada de pos entre Pos1 e Pos2
-% Nova_Entrada == Entrada, excepto na lista de ilhas vizinhas -> remover as ilhas que deixaram de ser vizinhas, após a adição da ponte.
-% entrada = [ilha, Vizinhas, Lista de pontes]
 
-actualiza_vizinhas_entrada(_, _, Posicoes, Entrada, Nova_Entrada) :-
-    Entrada = [_, Vizinhas, _], !,   % por no actualiza_aux?
-    % append(Lista_Pontes, [cria_ponte(Pos1, Pos2, Ponte)], Nova_Lista_Pontes),   % adicona ponte(Pos1, Pos2)
-    actualiza_vizinhas_entrada_aux(_, _, Posicoes, Entrada, Vizinhas, Vizinhas, Nova_Entrada).
+actualiza_vizinhas_entrada(_, _, Posicoes, [Ilha, Vizinhas, Lista_Pontes], [Ilha, Vizinhas_Atualizadas, Lista_Pontes]) :-
+    findall(Viz, (member(Viz, Vizinhas), caminho_livre(_, _, Posicoes, Ilha, Viz)), Vizinhas_Atualizadas).
 
-actualiza_vizinhas_entrada_aux(_, _, _, Entrada, _, [], Entrada).
-actualiza_vizinhas_entrada_aux(_, _, Posicoes, Entrada, Vizinhas, [P|R], Nova_Entrada) :- 
-    (caminho_livre(_, _, Posicoes, Ilha, P) -> actualiza_vizinhas_entrada_aux(_, _, Posicoes, Entrada, Vizinhas, R, Nova_Entrada); 
-    exclude(==(P), Vizinhas, Vizinhas_Atualizadas), Nova_Entrada = [Ilha, Vizinhas_Atualizadas, []]).   % con vazio???
-    
 
-% actualiza_vizinhas_entrada((4,1), (4,5), [(4, 2), (4, 3), (4, 4)], [ilha(2, (1,3)), [ilha(2, (3,3))], []], NovaEntrada)
+% ____________________________________________________________________
+% 2.9 - actualiza_vizinhas_apos_pontes/4
+% Da o estado apos atualizar as ilhas vizinhas de cada uma das suas entradas depois da adicao de uma ponte entre Pos1 e Pos2.
+% ____________________________________________________________________
 
+
+actualiza_vizinhas_apos_pontes(Estado, Pos1, Pos2, Novo_Estado) :-
+    posicoes_entre(Pos1, Pos2, Posicoes_entre), 
+    !,
+    maplist(actualiza_vizinhas_entrada(_, _, Posicoes_entre), Estado, Novo_Estado).
